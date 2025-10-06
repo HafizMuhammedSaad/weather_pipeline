@@ -1,7 +1,12 @@
 import requests
 import sqlite3
+import os
+from dotenv import load_dotenv
 
-API_KEY = "df10c03c6e42739d26fdb6195368693e"   # apna API key daalo
+# Load environment variables
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY")
 CITIES = ["Karachi", "Lahore", "Islamabad", "London", "New York"]
 
 def fetch_weather(city):
@@ -12,12 +17,10 @@ def fetch_weather(city):
 def insert_weather(city, temp, humidity, desc):
     conn = sqlite3.connect("weather_data.db")
     cursor = conn.cursor()
-
     cursor.execute(
-        "INSERT INTO weather (city, temperature, humidity, description) VALUES (?, ?, ?, ?)",
+        "INSERT INTO weather_data (city, temperature, humidity, description) VALUES (?, ?, ?, ?)",
         (city, temp, humidity, desc)
     )
-
     conn.commit()
     conn.close()
 
@@ -31,8 +34,13 @@ for city in CITIES:
     print(f"✅ {city} inserted: {temp}°C, {humidity}% humidity, {desc}")
 import requests
 import sqlite3
+import os
+from dotenv import load_dotenv
 
-API_KEY = "df10c03c6e42739d26fdb6195368693e"   # apna API key daalo
+# Load environment variables
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY")
 CITIES = ["Karachi", "Lahore", "Islamabad", "London", "New York"]
 
 def fetch_weather(city):
@@ -43,12 +51,10 @@ def fetch_weather(city):
 def insert_weather(city, temp, humidity, desc):
     conn = sqlite3.connect("weather_data.db")
     cursor = conn.cursor()
-
     cursor.execute(
-        "INSERT INTO weather (city, temperature, humidity, description) VALUES (?, ?, ?, ?)",
+        "INSERT INTO weather_data (city, temperature, humidity, description) VALUES (?, ?, ?, ?)",
         (city, temp, humidity, desc)
     )
-
     conn.commit()
     conn.close()
 

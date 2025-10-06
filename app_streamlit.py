@@ -1,67 +1,50 @@
 import streamlit as st
-import sqlite3
 import pandas as pd
+import sqlite3
 import plotly.express as px
-import os
 
-# DB fetch
+st.set_page_config(page_title="🌦 Real-Time Weather Dashboard", layout="wide")
+
+# Database connection
 def load_data():
     conn = sqlite3.connect("weather_data.db")
-    df = pd.read_sql_query("SELECT * FROM weather", conn)
+    df = pd.read_sql_query("SELECT * FROM weather_data", conn)
     conn.close()
     return df
 
-st.set_page_config(page_title="🌦 Weather Dashboard", layout="wide")
-st.title("🌦 Real-Time Weather Data Pipeline")
+st.title("🌦 Real-Time Weather Data Dashboard")
 
-# 🔄 Refresh Button (ETL run)
-if st.button("🔄 Refresh Data"):
-    os.system("python etl.py")   
-    st.rerun()    
-
+# Load data
 df = load_data()
 
 if df.empty:
-    st.warning("⚠️ No data available yet. Run etl.py first!")
+    st.warning("No data found. Please run 'elt.py' first to fetch weather data.")
 else:
-    # ✅ Ensure required columns exist
-    required_cols = ["city", "temperature", "humidity", "description", "timestamp"]
-    for col in required_cols:
-        if col not in df.columns:
-            df[col] = None   # default empty column
-
-    # Last Updated
-    last_updated = df["timestamp"].max()
-    st.caption(f"🕒 Last Updated: {last_updated}")
-
-    # Stats
-    hottest = df.loc[df['temperature'].idxmax()]
-    coldest = df.loc[df['temperature'].idxmin()]
-    avg_temp = df['temperature'].mean()
-
+    # Layout with columns
     col1, col2, col3 = st.columns(3)
-    col1.metric("🔥 Hottest City", hottest['city'], f"{hottest['temperature']}°C")
-    col2.metric("❄️ Coldest City", coldest['city'], f"{coldest['temperature']}°C")
-    col3.metric("🌍 Avg Temp", f"{avg_temp:.2f}°C")
 
-    # Line chart (Temperature trends)
-    st.subheader("🌡 Temperature Trends")
-    fig_temp = px.line(df, x="timestamp", y="temperature", color="city", markers=True)
-    st.plotly_chart(fig_temp, use_container_width=True)
+    # Analytics metrics
+    hottest_city = df.loc[df['temperature'].idxmax()]
+    coldest_city = df.loc[df['temperature'].idxmin()]
+    avg_temp = round(df['temperature'].mean(), 2)
 
-    # Bar chart (Humidity comparison)
-    st.subheader("💧 Humidity Comparison")
-    fig_humidity = px.bar(df, x="city", y="humidity", color="city", barmode="group")
-    st.plotly_chart(fig_humidity, use_container_width=True)
+    col1.metric("🔥 Hottest City", hottest_city['city'], f"{hottest_city['temperature']}°C")
+    col2.metric("❄️ Coldest City", coldest_city['city'], f"{coldest_city['temperature']}°C")
+    col3.metric("🌍 Avg Temperature", f"{avg_temp}°C")
 
-    # Latest Weather Details
-    st.subheader("🌍 Latest Weather Details")
-    st.dataframe(df[required_cols])
+    st.divider()
 
-    # CSV Export Button
-    st.download_button(
-        label="📥 Download Data as CSV",
-        data=df.to_csv(index=False),
-        file_name="weather_data.csv",
-        mime="text/csv"
-    )
+    # Trend chart
+    st.subheader("📈 Temperature Trends Over Time")
+    fig = px.line(df, x="timestamp", y="temperature", color="city", title="City-wise Temperature Trends")
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Average temperature by city
+    st.subheader("🏙 Average Temperature per City")
+    avg_df = df.groupby('city')['temperature'].mean().reset_index()
+    fig2 = px.bar(avg_df, x='city', y='temperature', color='city', title="Average Temperature by City")
+    st.plotly_chart(fig2, use_container_width=True)
+
+    # Show raw data
+    with st.expander("📊 Show Raw Data"):
+        st.dataframe(df)
